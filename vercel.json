@@ -1,13 +1,8 @@
 {
-  "functions": {
-    "app/server.ts": {
-      "runtime": "nodejs22.x"
-    }
-  },
-  "routes": [
+  "rewrites": [
     {
-      "src": "/(.*)",
-      "dest": "/api/server"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
