@@ -1,4 +1,7 @@
+import { Moon, Sun } from 'lucide-react'
 import { useEffect, useState } from 'react'
+
+import { Switch } from '#/components/ui/switch'
 
 type ThemeMode = 'light' | 'dark' | 'auto'
 
@@ -31,12 +34,25 @@ function applyThemeMode(mode: ThemeMode) {
   document.documentElement.style.colorScheme = resolved
 }
 
+function resolveTheme(mode: ThemeMode): 'light' | 'dark' {
+  if (mode === 'auto') {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light'
+  }
+
+  return mode
+}
+
 export default function ThemeToggle() {
   const [mode, setMode] = useState<ThemeMode>('auto')
+  const [isDark, setIsDark] = useState(false)
 
   useEffect(() => {
     const initialMode = getInitialMode()
+    const resolved = resolveTheme(initialMode)
     setMode(initialMode)
+    setIsDark(resolved === 'dark')
     applyThemeMode(initialMode)
   }, [])
 
@@ -46,7 +62,10 @@ export default function ThemeToggle() {
     }
 
     const media = window.matchMedia('(prefers-color-scheme: dark)')
-    const onChange = () => applyThemeMode('auto')
+    const onChange = () => {
+      setIsDark(media.matches)
+      applyThemeMode('auto')
+    }
 
     media.addEventListener('change', onChange)
     return () => {
@@ -54,28 +73,34 @@ export default function ThemeToggle() {
     }
   }, [mode])
 
-  function toggleMode() {
-    const nextMode: ThemeMode =
-      mode === 'light' ? 'dark' : mode === 'dark' ? 'auto' : 'light'
+  function toggleMode(checked: boolean) {
+    const nextMode: ThemeMode = checked ? 'dark' : 'light'
     setMode(nextMode)
+    setIsDark(checked)
     applyThemeMode(nextMode)
     window.localStorage.setItem('theme', nextMode)
   }
 
-  const label =
-    mode === 'auto'
-      ? 'Theme mode: auto (system). Click to switch to light mode.'
-      : `Theme mode: ${mode}. Click to switch mode.`
+  const label = isDark
+    ? 'Theme mode: dark. Toggle to switch to light mode.'
+    : 'Theme mode: light. Toggle to switch to dark mode.'
 
   return (
-    <button
-      type="button"
-      onClick={toggleMode}
-      aria-label={label}
-      title={label}
-      className="rounded-full border border-[var(--chip-line)] bg-[var(--chip-bg)] px-3 py-1.5 text-sm font-semibold text-[var(--sea-ink)] shadow-[0_8px_22px_rgba(30,90,72,0.08)] transition hover:-translate-y-0.5"
-    >
-      {mode === 'auto' ? 'Auto' : mode === 'dark' ? 'Dark' : 'Light'}
-    </button>
+    <div className="inline-flex items-center gap-2">
+      <Sun
+        className={`h-4 w-4 transition-colors ${isDark ? 'text-muted-foreground' : 'text-foreground'}`}
+        aria-hidden="true"
+      />
+      <Switch
+        checked={isDark}
+        onCheckedChange={toggleMode}
+        aria-label={label}
+        title={label}
+      />
+      <Moon
+        className={`h-4 w-4 transition-colors ${isDark ? 'text-foreground' : 'text-muted-foreground'}`}
+        aria-hidden="true"
+      />
+    </div>
   )
 }
